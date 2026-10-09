@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Department — AgroTrack{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="mb-6 flex items-center justify-between">
+        <a href="{% url 'department_list' %}" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-emerald-700 transition">
+            <i class="fa-solid fa-arrow-left"></i> Back to Departments
+        </a>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-emerald-100/70 shadow-sm overflow-hidden">
+        <!-- Card Header -->
+        <div class="bg-emerald-50/50 p-6 border-b border-slate-100">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-sitemap"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900">Create Operational Department</h1>
+                    <p class="text-xs text-slate-500">Define a new agricultural sector and its primary performance metric.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Body -->
+        <form method="POST" class="p-6 space-y-5">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="p-4 rounded-xl bg-rose-50 text-rose-800 border border-rose-200 text-sm">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Department Name -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="{{ form.name.id_for_label }}">
+                    Department Name <span class="text-rose-500">*</span>
+                </label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <p class="text-rose-600 text-xs mt-1">{{ form.name.errors.0 }}</p>
+                {% endif %}
+                <p class="text-[11px] text-slate-400 mt-1">e.g. Apiculture, Dairy Cattle, Aquaculture, Greenhouse</p>
+            </div>
+
+            <!-- Primary Metric Name -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="{{ form.metric_name.id_for_label }}">
+                    Primary Performance Metric <span class="text-rose-500">*</span>
+                </label>
+                {{ form.metric_name }}
+                {% if form.metric_name.errors %}
+                <p class="text-rose-600 text-xs mt-1">{{ form.metric_name.errors.0 }}</p>
+                {% endif %}
+                <p class="text-[11px] text-slate-400 mt-1">What output does this department track? (e.g. Honey Yield, Milk Volume, Fish Weight)</p>
+            </div>
+
+            <!-- Metric Unit -->
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5" for="{{ form.metric_unit.id_for_label }}">
+                    Measurement Unit <span class="text-rose-500">*</span>
+                </label>
+                {{ form.metric_unit }}
+                {% if form.metric_unit.errors %}
+                <p class="text-rose-600 text-xs mt-1">{{ form.metric_unit.errors.0 }}</p>
+                {% endif %}
+                <p class="text-[11px] text-slate-400 mt-1">The physical unit used for daily logs (e.g. liters, kg, crates, heads)</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+                <a href="{% url 'department_list' %}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-6 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+                    <i class="fa-solid fa-check"></i> Save Department
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

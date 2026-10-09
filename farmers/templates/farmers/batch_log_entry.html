@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Bulk Daily Entry Grid — AgroTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Top Action & Navigation Bar -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-2 mb-1">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                    <i class="fa-solid fa-bolt mr-1"></i> Fast Field Mode
+                </span>
+                <span class="text-xs text-slate-400">• {{ total_active }} active farmers</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight">Bulk Daily Entry Grid</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Log daily yields for an entire agricultural sector in one batch. Existing logs for this date are pre-filled for easy updates.
+            </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="{% url 'log_entry' %}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-xs">
+                <i class="fa-solid fa-list-check text-emerald-600"></i>
+                <span>Single Entry Form</span>
+            </a>
+            <a href="{% url 'export_performance_csv' %}{% if selected_dept %}?department={{ selected_dept.id }}{% endif %}" 
+               class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 transition shadow-xs">
+                <i class="fa-solid fa-file-csv"></i>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar: Department & Date Picker -->
+    <div class="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-2xl border border-emerald-100/70 dark:border-slate-800 shadow-xs">
+        <form method="GET" id="grid-filter-form" class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+            <!-- Department Selector -->
+            <div class="sm:col-span-6 md:col-span-5">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                    Operational Department
+                </label>
+                <div class="relative">
+                    <select name="department" onchange="this.form.submit()" 
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none transition">
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_dept and selected_dept.id == dept.id %}selected{% endif %}>
+                            {{ dept.name }} ({{ dept.metric_name }} in {{ dept.metric_unit }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Date Picker -->
+            <div class="sm:col-span-4 md:col-span-4">
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+                    Log Date
+                </label>
+                <input type="date" name="date" value="{{ selected_date_str }}" max="{{ today_str }}" onchange="this.form.submit()"
+                       class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-emerald-500 outline-none transition">
+            </div>
+
+            <!-- Reload / Reset -->
+            <div class="sm:col-span-2 md:col-span-3 flex items-center gap-2">
+                <button type="submit" class="w-full py-2.5 px-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Reload Grid</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- The Bulk Batch Form -->
+    {% if farmer_rows %}
+    <form method="POST" action="{% url 'batch_log_entry' %}?department={{ selected_dept.id }}&date={{ selected_date_str }}" class="space-y-4">
+        {% csrf_token %}
+        <input type="hidden" name="department" value="{{ selected_dept.id }}">
+        <input type="hidden" name="date" value="{{ selected_date_str }}">
+
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-emerald-100/70 dark:border-slate-800 shadow-xs overflow-hidden">
+            <div class="p-4 sm:p-5 bg-emerald-50/40 dark:bg-slate-800/50 border-b border-emerald-100/60 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+                        <i class="fa-solid fa-tractor"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">
+                            {{ selected_dept.name }} — {{ selected_date_str }}
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">
+                            Measuring <strong>{{ selected_dept.metric_name }}</strong> in <strong>{{ selected_dept.metric_unit }}</strong>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <button type="submit" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 transition text-xs">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        <span>Save All Entries</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Responsive Table Grid -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-bold border-b border-slate-100 dark:border-slate-800">
+                        <tr>
+                            <th class="py-3.5 px-4 sm:px-6">Farmer</th>
+                            <th class="py-3.5 px-4 w-48 sm:w-56">Daily Yield ({{ selected_dept.metric_unit }})</th>
+                            <th class="py-3.5 px-4">Field Notes (Optional)</th>
+                            <th class="py-3.5 px-4 text-center w-28">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        {% for row in farmer_rows %}
+                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                            <!-- Farmer Info -->
+                            <td class="py-3.5 px-4 sm:px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 font-bold flex items-center justify-center text-xs">
+                                        {{ row.farmer.name|make_list|first|upper }}
+                                    </div>
+                                    <div>
+                                        <a href="{% url 'farmer_detail' row.farmer.id %}" target="_blank" class="font-bold text-slate-900 dark:text-white hover:text-emerald-600 dark:hover:text-emerald-400 transition">
+                                            {{ row.farmer.name }}
+                                        </a>
+                                        <p class="text-[11px] text-slate-400 font-mono">{{ row.farmer.farmer_id }}</p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Yield Numeric Input with Mobile inputmode="decimal" -->
+                            <td class="py-3.5 px-4">
+                                <div class="relative">
+                                    <input type="number" 
+                                           step="0.01" 
+                                           min="0"
+                                           inputmode="decimal"
+                                           name="yield_{{ row.farmer.id }}" 
+                                           value="{{ row.value }}" 
+                                           placeholder="0.00"
+                                           class="w-full pl-3 pr-14 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white font-mono text-xs font-bold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 pointer-events-none">
+                                        <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/50 px-2 py-0.5 rounded">
+                                            {{ selected_dept.metric_unit }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- Field Notes Input -->
+                            <td class="py-3.5 px-4">
+                                <input type="text" 
+                                       name="notes_{{ row.farmer.id }}" 
+                                       value="{{ row.notes }}" 
+                                       placeholder="e.g. Weather conditions, good feed conversion, etc."
+                                       class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-xs focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                            </td>
+
+                            <!-- Status Badge -->
+                            <td class="py-3.5 px-4 text-center">
+                                {% if row.existing_log %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
+                                    <i class="fa-solid fa-circle-check text-[10px]"></i> Logged
+                                </span>
+                                {% else %}
+                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                                    <i class="fa-regular fa-clock text-[10px]"></i> Pending
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Footer Save Action -->
+            <div class="p-4 sm:p-5 bg-slate-50/80 dark:bg-slate-800/60 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span class="text-xs text-slate-500 dark:text-slate-400">
+                    Pressing <strong>Save All Entries</strong> will record yields for all non-empty rows.
+                </span>
+                <button type="submit" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md shadow-emerald-600/20 transition text-xs">
+                    <i class="fa-solid fa-floppy-disk"></i>
+                    <span>Save All Entries</span>
+                </button>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <div class="bg-white dark:bg-slate-900 rounded-2xl border border-emerald-100 dark:border-slate-800 p-8 text-center">
+        <div class="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/50 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3 text-xl">
+            <i class="fa-solid fa-user-slash"></i>
+        </div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">No active farmers in this department</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+            There are currently no active farmers registered under {{ selected_dept.name }}. You can enroll new farmers or select another department above.
+        </p>
+        <div class="mt-4">
+            <a href="{% url 'farmer_create' %}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">
+                <i class="fa-solid fa-user-plus"></i> Enroll Farmer
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

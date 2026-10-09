@@ -1,0 +1,325 @@
+{% extends 'base.html' %}
+
+{% block title %}Performance Analysis — AgroTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header with Breadcrumb & Description -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Performance Analysis</h1>
+            <p class="text-sm text-slate-500 mt-0.5">Benchmarked weekly and monthly yield metrics and normalized efficiency rankings.</p>
+        </div>
+
+        <!-- Period Toggle Pill (Weekly vs Monthly) -->
+        <div class="inline-flex p-1 bg-white border border-emerald-200/80 rounded-xl shadow-sm text-xs font-semibold">
+            <a href="?period=weekly{% if selected_dept %}&department={{ selected_dept.id }}{% endif %}" 
+               class="px-4 py-2 rounded-lg transition {% if period_type == 'weekly' %}bg-emerald-600 text-white shadow-sm{% else %}text-slate-600 hover:text-emerald-700{% endif %}">
+                <i class="fa-solid fa-calendar-week mr-1"></i> Weekly Analysis
+            </a>
+            <a href="?period=monthly{% if selected_dept %}&department={{ selected_dept.id }}{% endif %}" 
+               class="px-4 py-2 rounded-lg transition {% if period_type == 'monthly' %}bg-emerald-600 text-white shadow-sm{% else %}text-slate-600 hover:text-emerald-700{% endif %}">
+                <i class="fa-solid fa-calendar-days mr-1"></i> Monthly Analysis
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar: Department Scope -->
+    <div class="bg-white rounded-2xl p-4 border border-emerald-100/70 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <form method="GET" class="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+            <input type="hidden" name="period" value="{{ period_type }}">
+            <label class="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                <i class="fa-solid fa-filter text-emerald-600"></i> Department Scope:
+            </label>
+            <select name="department" onchange="this.form.submit()" 
+                    class="text-sm px-3.5 py-1.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-medium text-slate-800">
+                <option value="">All Departments (Separated Units)</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if selected_dept.id == dept.id %}selected{% endif %}>
+                    {{ dept.name }} ({{ dept.metric_name }} in {{ dept.metric_unit }})
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800">
+                {% if selected_dept %}{{ selected_dept.name }} Sector{% else %}Multi-Sector Overview{% endif %}
+            </span>
+            <a href="{% url 'export_performance_csv' %}{% if selected_dept %}?department={{ selected_dept.id }}{% endif %}" 
+               title="Export performance logs to CSV spreadsheet"
+               class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-emerald-700 dark:text-emerald-300 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-slate-700 hover:bg-emerald-50 dark:hover:bg-slate-700 transition shadow-xs">
+                <i class="fa-solid fa-file-csv text-emerald-600"></i>
+                <span>Export CSV</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Department-Specific KPI Cards (Units Never Blended!) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {% for summary in dept_summaries %}
+        <div class="bg-white rounded-2xl p-5 border border-emerald-100/80 shadow-sm hover:border-emerald-300 transition">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-sm">
+                        <i class="fa-solid fa-seedling"></i>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-slate-900 text-base">{{ summary.department.name }}</h2>
+                        <span class="text-[11px] text-slate-400 font-medium">{{ summary.department.metric_name }}</span>
+                    </div>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/50">
+                    {{ summary.active_farmers }} Farmers
+                </span>
+            </div>
+
+            <!-- Department Metric Numbers -->
+            <div class="bg-emerald-50/30 rounded-xl p-3.5 border border-emerald-100/50 space-y-2 text-xs">
+                <div class="flex justify-between items-baseline">
+                    <span class="text-slate-500 font-medium">Total Yield:</span>
+                    <span class="text-base font-extrabold text-emerald-700">
+                        {{ summary.total_output }} <span class="text-xs font-normal text-slate-500">{{ summary.department.metric_unit }}</span>
+                    </span>
+                </div>
+                <div class="flex justify-between items-baseline">
+                    <span class="text-slate-500 font-medium">Daily Benchmark Avg:</span>
+                    <span class="font-bold text-slate-800">
+                        {{ summary.avg_daily }} <span class="text-slate-400 font-normal">{{ summary.department.metric_unit }}/day</span>
+                    </span>
+                </div>
+                {% if summary.top_farmer %}
+                <div class="flex justify-between items-baseline pt-1.5 border-t border-emerald-100/60">
+                    <span class="text-slate-500 font-medium">Top Performer:</span>
+                    <a href="{% url 'farmer_detail' summary.top_farmer.farmer__id %}" class="font-bold text-emerald-700 hover:underline">
+                        {{ summary.top_farmer.farmer__name }}
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Production Trend Chart (Honest Day-Counted Labels) -->
+    <div class="bg-white rounded-2xl p-6 border border-emerald-100/70 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+            <div>
+                <h2 class="font-bold text-slate-900 text-lg flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-emerald-600"></i> 
+                    {% if period_type == 'weekly' %}Weekly Normalized Daily Average{% else %}Monthly Normalized Daily Average{% endif %}
+                </h2>
+                <p class="text-xs text-slate-500">
+                    Average daily output per log across recording periods. Short weeks are labeled with actual recorded days.
+                </p>
+            </div>
+            <span class="text-xs bg-emerald-100 text-emerald-800 font-semibold px-3 py-1 rounded-full">
+                Metric: Daily Average
+            </span>
+        </div>
+
+        <div class="w-full h-80">
+            <canvas id="analysisChart"></canvas>
+        </div>
+
+        <div class="mt-3 flex items-center gap-2 text-xs text-slate-400">
+            <i class="fa-solid fa-circle-info text-emerald-600"></i>
+            <span>Labels like <em>"Sep 12–14 (3d)"</em> show partial weeks so comparisons remain mathematically honest.</span>
+        </div>
+    </div>
+
+    <!-- Normalized League Table: Fair Cross-Department Ranking -->
+    <div class="bg-white rounded-2xl border border-emerald-100/70 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <div>
+                <h2 class="font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-ranking-star text-emerald-600"></i> Normalized Performance Leaderboard
+                </h2>
+                <p class="text-xs text-slate-500">
+                    Farmers are ranked fairly by their <strong>relative performance (% above or below their own department's average)</strong>.
+                </p>
+            </div>
+            <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600">
+                Department Benchmark Model
+            </span>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-emerald-50/50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-4 w-16">Rank</th>
+                        <th class="px-6 py-4">Farmer</th>
+                        <th class="px-6 py-4">Department</th>
+                        <th class="px-6 py-4">Benchmark Rating</th>
+                        <th class="px-6 py-4">Daily Average</th>
+                        <th class="px-6 py-4">Total Output</th>
+                        <th class="px-6 py-4">Logged Days</th>
+                        <th class="px-6 py-4 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for item in ranked_farmers %}
+                    <tr class="hover:bg-emerald-50/20 transition">
+                        <!-- Rank Badge -->
+                        <td class="px-6 py-4">
+                            {% if forloop.counter == 1 %}
+                            <span class="w-7 h-7 rounded-full bg-amber-100 text-amber-800 font-bold flex items-center justify-center text-xs shadow-sm">
+                                🥇
+                            </span>
+                            {% elif forloop.counter == 2 %}
+                            <span class="w-7 h-7 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs">
+                                🥈
+                            </span>
+                            {% elif forloop.counter == 3 %}
+                            <span class="w-7 h-7 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-bold flex items-center justify-center text-xs">
+                                🥉
+                            </span>
+                            {% else %}
+                            <span class="w-7 h-7 rounded-full bg-slate-50 text-slate-500 font-semibold flex items-center justify-center text-xs">
+                                #{{ forloop.counter }}
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Farmer Name & ID -->
+                        <td class="px-6 py-4">
+                            <a href="{% url 'farmer_detail' item.farmer_id %}" class="font-bold text-slate-900 hover:text-emerald-700 block transition">
+                                {{ item.name }}
+                            </a>
+                            <span class="font-mono text-xs text-slate-400">{{ item.farmer_code }}</span>
+                        </td>
+
+                        <!-- Department -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200/60">
+                                {{ item.dept_name }}
+                            </span>
+                        </td>
+
+                        <!-- Benchmark Rating (% vs Dept Average) -->
+                        <td class="px-6 py-4">
+                            {% if item.rel_perf > 0 %}
+                            <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                                <i class="fa-solid fa-arrow-trend-up text-emerald-600"></i> +{{ item.rel_perf }}% vs Dept Avg
+                            </span>
+                            {% elif item.rel_perf < 0 %}
+                            <span class="inline-flex items-center gap-1 font-bold text-xs px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                                <i class="fa-solid fa-arrow-trend-down text-amber-600"></i> {{ item.rel_perf }}% vs Dept Avg
+                            </span>
+                            {% else %}
+                            <span class="text-xs font-medium text-slate-500">
+                                On Department Avg
+                            </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- Daily Average Yield -->
+                        <td class="px-6 py-4 text-slate-800 font-bold">
+                            {{ item.avg_output }} <span class="text-xs font-normal text-slate-500">{{ item.unit }}/day</span>
+                        </td>
+
+                        <!-- Total Output in Unit -->
+                        <td class="px-6 py-4 text-slate-600 font-medium text-xs">
+                            {{ item.total_output }} {{ item.unit }}
+                        </td>
+
+                        <!-- Logged Days -->
+                        <td class="px-6 py-4 text-xs font-medium text-slate-600">
+                            {{ item.entry_count }} days
+                        </td>
+
+                        <!-- Action -->
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'farmer_detail' item.farmer_id %}" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline">
+                                Portfolio &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-10 text-center text-slate-400 text-sm">
+                            No performance logs recorded in this timeframe.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const labels = {{ chart_labels_json|safe }};
+    const averages = {{ chart_averages_json|safe }};
+
+    const ctx = document.getElementById('analysisChart').getContext('2d');
+
+    // Emerald gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, 'rgba(5, 150, 105, 0.25)');
+    gradient.addColorStop(1, 'rgba(5, 150, 105, 0.01)');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels.length ? labels : ['No data'],
+            datasets: [
+                {
+                    label: 'Daily Average Yield',
+                    data: averages.length ? averages : [0],
+                    borderColor: '#059669',
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.35,
+                    pointBackgroundColor: '#047857',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'top',
+                    labels: {
+                        color: '#475569',
+                        font: { family: 'sans-serif', size: 12, weight: 'bold' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: '#064e3b',
+                    titleFont: { size: 13, weight: 'bold' },
+                    padding: 10,
+                    cornerRadius: 8,
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(226, 232, 240, 0.6)' },
+                    ticks: { color: '#64748b' },
+                    title: {
+                        display: true,
+                        text: 'Daily Average Yield',
+                        color: '#059669',
+                        font: { size: 11, weight: 'bold' }
+                    }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#64748b' }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

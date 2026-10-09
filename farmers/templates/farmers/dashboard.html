@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Overview Dashboard — AgroTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header with Quick Action Buttons -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Performance Overview</h1>
+            <p class="text-sm text-slate-500 mt-0.5">Real-time metrics, department summaries, and recent activity.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2.5">
+            <a href="{% url 'export_performance_csv' %}" title="Export All Yield Records to CSV" class="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 text-xs font-semibold px-3 py-2 rounded-xl shadow-xs transition">
+                <i class="fa-solid fa-file-csv text-emerald-600"></i> <span>Export CSV</span>
+            </a>
+            <a href="{% url 'batch_log_entry' %}" class="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold px-3.5 py-2 rounded-xl shadow-xs transition">
+                <i class="fa-solid fa-table-cells"></i> <span>Batch Entry</span>
+            </a>
+            <a href="{% url 'farmer_create' %}" class="inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+                <i class="fa-solid fa-user-plus"></i> <span>Enroll Farmer</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Stat Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <!-- Active Farmers -->
+        <div class="bg-white rounded-2xl p-6 border border-emerald-100/70 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Farmers</p>
+                <p class="text-3xl font-extrabold text-emerald-700 mt-1">{{ active_farmers_count }}</p>
+                <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium mt-2">
+                    <i class="fa-solid fa-check-circle"></i> Enrolled & Active
+                </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-xl">
+                <i class="fa-solid fa-users"></i>
+            </div>
+        </div>
+
+        <!-- Inactive / Archived -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200/70 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Archived Farmers</p>
+                <p class="text-3xl font-extrabold text-slate-600 mt-1">{{ inactive_farmers_count }}</p>
+                <span class="inline-flex items-center gap-1 text-xs text-slate-400 font-medium mt-2">
+                    <i class="fa-solid fa-box-archive"></i> Soft-deleted
+                </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-600 text-xl">
+                <i class="fa-solid fa-user-slash"></i>
+            </div>
+        </div>
+
+        <!-- Departments Count -->
+        <div class="bg-white rounded-2xl p-6 border border-emerald-100/70 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Departments</p>
+                <p class="text-3xl font-extrabold text-emerald-700 mt-1">{{ departments.count }}</p>
+                <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium mt-2">
+                    <i class="fa-solid fa-layer-group"></i> Tracked sectors
+                </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-700 text-xl">
+                <i class="fa-solid fa-sitemap"></i>
+            </div>
+        </div>
+
+        <!-- Total Recorded Logs -->
+        <div class="bg-white rounded-2xl p-6 border border-emerald-100/70 shadow-sm flex items-center justify-between">
+            <div>
+                <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Performance Logs</p>
+                <p class="text-3xl font-extrabold text-emerald-700 mt-1">{{ total_logs_count }}</p>
+                <span class="inline-flex items-center gap-1 text-xs text-emerald-600 font-medium mt-2">
+                    <i class="fa-solid fa-arrow-trend-up"></i> Total records logged
+                </span>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700 text-xl">
+                <i class="fa-solid fa-clipboard-check"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department Segmentation Overview -->
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-emerald-600"></i> Department Breakdown
+            </h2>
+            <a href="{% url 'department_list' %}" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline">
+                View all departments &rarr;
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {% for dept in departments %}
+            <div class="bg-white rounded-2xl p-5 border border-emerald-100/70 shadow-sm hover:border-emerald-300 transition">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-slate-900 text-base">{{ dept.name }}</h3>
+                    <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                        {{ dept.active_farmer_count }} Active
+                    </span>
+                </div>
+                <div class="bg-emerald-50/40 rounded-xl p-3 border border-emerald-100/50 text-xs space-y-1.5">
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Core Metric:</span>
+                        <span class="font-semibold text-slate-800">{{ dept.metric_name }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-500">Measurement Unit:</span>
+                        <span class="font-semibold text-slate-800">{{ dept.metric_unit }}</span>
+                    </div>
+                </div>
+                <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+                    <a href="{% url 'farmer_list' %}?department={{ dept.id }}" class="text-emerald-700 font-semibold hover:underline">
+                        Filter farmers &rarr;
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full bg-white rounded-2xl p-8 text-center border border-dashed border-emerald-200">
+                <i class="fa-solid fa-sitemap text-3xl text-emerald-300 mb-2"></i>
+                <p class="text-slate-600 font-medium">No departments set up yet.</p>
+                <p class="text-xs text-slate-400 mt-1">You can add departments like "Poultry" or "Fishery" via the Django Admin.</p>
+                <a href="/admin/farmers/department/add/" target="_blank" class="mt-4 inline-flex items-center gap-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg shadow-sm">
+                    Add Department in Admin
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Performance Logs Table -->
+    <div class="bg-white rounded-2xl border border-emerald-100/70 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+            <h2 class="font-bold text-slate-900 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-emerald-600"></i> Recent Performance Entries
+            </h2>
+            <a href="{% url 'log_entry' %}" class="text-xs font-semibold text-emerald-700 hover:underline">
+                + New Log Entry
+            </a>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-emerald-50/50 text-slate-500 text-xs uppercase font-semibold border-b border-slate-100">
+                    <tr>
+                        <th class="px-6 py-3.5">Farmer</th>
+                        <th class="px-6 py-3.5">Department</th>
+                        <th class="px-6 py-3.5">Date</th>
+                        <th class="px-6 py-3.5">Metric Value</th>
+                        <th class="px-6 py-3.5">Notes</th>
+                        <th class="px-6 py-3.5 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for log in recent_logs %}
+                    <tr class="hover:bg-emerald-50/20 transition">
+                        <td class="px-6 py-4 font-semibold text-slate-900">
+                            <a href="{% url 'farmer_detail' log.farmer.id %}" class="hover:text-emerald-700 flex items-center gap-2">
+                                <span class="text-xs text-slate-400 font-mono">{{ log.farmer.farmer_id }}</span>
+                                <span>{{ log.farmer.name }}</span>
+                            </a>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="text-xs font-medium px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                                {{ log.farmer.department.name }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-600">{{ log.date|date:"M d, Y" }}</td>
+                        <td class="px-6 py-4 font-bold text-emerald-700">
+                            {{ log.metric_value }} <span class="text-xs font-normal text-slate-500">{{ log.farmer.department.metric_unit }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-slate-500 text-xs max-w-xs truncate">
+                            {{ log.notes|default:"—" }}
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <a href="{% url 'farmer_detail' log.farmer.id %}" class="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline">
+                                View Profile
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-slate-400 text-sm">
+                            No performance logs recorded yet. Once supervisors submit daily entries, they will appear here.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

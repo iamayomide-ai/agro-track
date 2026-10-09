@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Departments — AgroTrack{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Departments & Metrics</h1>
+            <p class="text-sm text-slate-500 mt-0.5">Configured operational sectors and their primary performance indicators.</p>
+        </div>
+        <a href="{% url 'department_create' %}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm shadow-emerald-600/20 transition">
+            <i class="fa-solid fa-plus"></i> Add New Department
+        </a>
+    </div>
+
+    <!-- Grid of Departments -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for dept in departments %}
+        <div class="bg-white rounded-2xl border border-emerald-100/70 p-6 shadow-sm hover:shadow-md transition">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">{{ dept.name }}</h2>
+                    <span class="text-xs text-slate-400">Created {{ dept.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-700">
+                    <i class="fa-solid fa-seedling text-lg"></i>
+                </div>
+            </div>
+
+            <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100/50 text-xs">
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-medium">Core Metric:</span>
+                    <span class="font-bold text-slate-800">{{ dept.metric_name }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-medium">Measurement Unit:</span>
+                    <span class="font-bold text-emerald-700 bg-white px-2 py-0.5 rounded border border-emerald-200/50">{{ dept.metric_unit }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-slate-500 font-medium">Active Farmers:</span>
+                    <span class="font-bold text-slate-800">{{ dept.active_farmer_count }} active / {{ dept.total_farmer_count }} total</span>
+                </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-slate-100 flex justify-between items-center text-xs">
+                <a href="{% url 'farmer_list' %}?department={{ dept.id }}" class="text-emerald-700 font-bold hover:underline flex items-center gap-1.5">
+                    <i class="fa-solid fa-users"></i> View Farmers
+                </a>
+                <a href="/admin/farmers/department/{{ dept.id }}/change/" target="_blank" class="text-slate-400 hover:text-slate-600 transition">
+                    <i class="fa-solid fa-gear"></i> Edit in Admin
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full bg-white rounded-2xl p-12 text-center border border-dashed border-emerald-200">
+            <i class="fa-solid fa-sitemap text-4xl text-emerald-300 mb-3"></i>
+            <h3 class="text-lg font-bold text-slate-800">No departments configured yet</h3>
+            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1 mb-5">
+                Departments define how farmers are grouped and what performance metrics (e.g. Poultry = Egg Yield, Fishery = Fish Weight) they are measured on.
+            </p>
+            <a href="{% url 'department_create' %}" class="inline-flex items-center gap-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-plus"></i> Create First Department
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

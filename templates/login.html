@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In — AgroTrack Portals{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto py-6 sm:py-10 w-full">
+    <!-- Top Floating Bar: Logo & Dark Mode Toggle -->
+    <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-md shadow-emerald-600/20">
+                <i class="fa-solid fa-seedling text-base"></i>
+            </div>
+            <span class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Agro<span class="text-emerald-600">Track</span></span>
+        </div>
+        
+        <button type="button" onclick="toggleDarkMode()" 
+                class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs hover:bg-emerald-50 dark:hover:bg-slate-800 transition">
+            <i id="theme-toggle-login-icon" class="fa-solid fa-moon text-emerald-600 dark:text-amber-400 text-sm"></i>
+            <span id="theme-toggle-login-text">Dark Mode</span>
+        </button>
+    </div>
+
+    <!-- Header Title -->
+    <div class="text-center mb-8">
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Welcome to Agro<span class="text-emerald-600">Track</span></h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Please select your portal to access your dashboard</p>
+    </div>
+
+    <!-- Main Card -->
+    <div class="bg-white dark:bg-slate-900 rounded-3xl border border-emerald-100/80 dark:border-slate-800 shadow-xl shadow-emerald-900/5 p-6 sm:p-8">
+        
+        <!-- 3 Portal Selector Tabs -->
+        <div class="grid grid-cols-3 gap-2 p-1.5 bg-emerald-50/50 dark:bg-slate-800/60 rounded-2xl border border-emerald-100 dark:border-slate-700 mb-8 text-center text-xs font-bold">
+            <!-- Admin Tab Button -->
+            <button type="button" onclick="selectRole('admin')" id="tab-admin"
+                    class="py-3 px-2 rounded-xl transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                <i class="fa-solid fa-crown text-base"></i>
+                <span>Admin</span>
+            </button>
+
+            <!-- Supervisor Tab Button -->
+            <button type="button" onclick="selectRole('supervisor')" id="tab-supervisor"
+                    class="py-3 px-2 rounded-xl transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                <i class="fa-solid fa-clipboard-user text-base"></i>
+                <span>Supervisor</span>
+            </button>
+
+            <!-- Farmer Tab Button -->
+            <button type="button" onclick="selectRole('farmer')" id="tab-farmer"
+                    class="py-3 px-2 rounded-xl transition flex flex-col sm:flex-row items-center justify-center gap-1.5">
+                <i class="fa-solid fa-tractor text-base"></i>
+                <span>Farmer</span>
+            </button>
+        </div>
+
+        <!-- Form: Admin Portal -->
+        <form method="POST" id="form-admin" action="{% url 'login' %}" class="space-y-5 hidden">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="admin">
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Admin Username or Email
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-user absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" name="username" required placeholder="admin"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm transition">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Password
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" name="password" required placeholder="••••••••"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm transition">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                <span>Sign In as Admin</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+        <!-- Form: Supervisor Portal -->
+        <form method="POST" id="form-supervisor" action="{% url 'login' %}" class="space-y-5 hidden">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="supervisor">
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Supervisor Username
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-user-tie absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" name="username" required placeholder="e.g. supervisor_poultry"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm transition">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Password
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-lock absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="password" name="password" required placeholder="••••••••"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm transition">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                <span>Sign In as Supervisor</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+        <!-- Form: Farmer Portal -->
+        <form method="POST" id="form-farmer" action="{% url 'login' %}" class="space-y-5 hidden">
+            {% csrf_token %}
+            <input type="hidden" name="role" value="farmer">
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Farmer ID
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-id-card absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" name="farmer_id" required placeholder="e.g. 1 or 0001 or FMR-0001"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm font-mono uppercase transition">
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1">Dashes and prefix are optional — you can just enter your number.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">
+                    Registered Phone Number
+                </label>
+                <div class="relative">
+                    <i class="fa-solid fa-phone absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="tel" name="contact" required placeholder="e.g. 08031234567"
+                           class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none text-sm transition">
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1">Any format accepted (no special dashes or plus signs required).</p>
+            </div>
+
+            <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-md shadow-emerald-600/20 transition flex items-center justify-center gap-2">
+                <span>View My Portfolio</span>
+                <i class="fa-solid fa-arrow-right text-xs"></i>
+            </button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const activeTab = "{{ active_tab|default:'admin' }}";
+
+    function selectRole(role) {
+        // Hide all forms
+        document.getElementById('form-admin').classList.add('hidden');
+        document.getElementById('form-supervisor').classList.add('hidden');
+        document.getElementById('form-farmer').classList.add('hidden');
+
+        // Reset all tabs styling
+        const inactiveClass = "text-slate-600 dark:text-slate-400 hover:text-emerald-700 dark:hover:text-emerald-400 bg-transparent";
+        const activeClass = "bg-white dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 shadow-sm border border-emerald-200/80 dark:border-slate-700";
+
+        ['admin', 'supervisor', 'farmer'].forEach(r => {
+            const tab = document.getElementById(`tab-${r}`);
+            tab.className = `py-3 px-2 rounded-xl transition flex flex-col sm:flex-row items-center justify-center gap-1.5 ${r === role ? activeClass : inactiveClass}`;
+        });
+
+        // Show active form
+        const activeForm = document.getElementById(`form-${role}`);
+        if (activeForm) {
+            activeForm.classList.remove('hidden');
+        }
+    }
+
+    // Initialize with active tab
+    selectRole(activeTab);
+</script>
+{% endblock %}
